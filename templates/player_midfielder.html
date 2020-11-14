@@ -46,7 +46,7 @@
         function showGoalkeeper() {
             $.ajax({
                 type: "GET",
-                url: "/search?position=goalkeepers", // /memo라는 url에 요청하겠다.
+                url: "/search?position=midfielder", // /memo라는 url에 요청하겠다.
                 data: {},
                 success: function (response) { // 성공하면
                     if (response["result"] == "success") {

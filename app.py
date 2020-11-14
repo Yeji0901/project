@@ -16,8 +16,21 @@ app = Flask(__name__)
 def home():
     return render_template('index.html')
 
-@app.route('/search_goalkeepers', methods=['GET'])
-def show_goalkeepers():
+@app.route('/search', methods=['GET'])
+def search_players():
+    print("[search_players] START")
+    position_info = request.args.get('position')
+    if position_info == "goalkeepers":
+        position_html = "Goalkeeper"
+    elif position_info == "defender":
+        position_html = "Defender"
+    elif position_info == "midfielder":
+        position_html = "Midfielder"
+    elif position_info == "forward":
+        position_html = "Forward"
+    else:
+        print("position_info is not matched")
+
     result = []
 
     url = "https://en.psg.fr/teams/first-team/squad"
@@ -35,55 +48,30 @@ def show_goalkeepers():
             img = player.select_one(
                 "div.player-card__main > div.player-card__body > div.player-card__mobile-avatar.u-visible-mobile > figure > img")[
                 "data-src"]
-            if position.text == "Goalkeeper":
+            if position.text == position_html:
                 link = player['href']
                 player_name = link.split('/')[-1]
                 # print(position.text, player_name, img)
                 result.append([position.text, player_name, img])
 
+    print("[search_players] END")
     return jsonify({'result': 'success', 'goalkeepers': result})
 
 @app.route('/goalkeepers')
 def show_goalkeepers():
     return render_template('player_goalkeepers.html')
 
+@app.route('/defender')
+def show_defender():
+    return render_template('player_defender.html')
 
-@app.route('/memo', methods=['POST'])
-def post_article():
-    # 1. 클라이언트로부터 데이터를 받기
-    url_receive = request.form['url_give']  # 클라이언트로부터 url을 받는 부분
-    comment_receive = request.form['comment_give']  # 클라이언트로부터 comment를 받는 부분
+@app.route('/midfielder')
+def show_midfielder():
+    return render_template('player_midfielder.html')
 
-    # 2. meta tag를 스크래핑하기
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'}
-    data = requests.get(url_receive, headers=headers)
-    soup = BeautifulSoup(data.text, 'html.parser')
-
-    og_image = soup.select_one('meta[property="og:image"]')
-    og_title = soup.select_one('meta[property="og:title"]')
-    og_description = soup.select_one('meta[property="og:description"]')
-
-    url_title = og_title['content']
-    url_description = og_description['content']
-    url_image = og_image['content']
-
-    article = {'url': url_receive, 'title': url_title, 'desc': url_description, 'image': url_image,
-               'comment': comment_receive}
-
-    # 3. mongoDB에 데이터를 넣기
-    db.articles.insert_one(article)
-
-    return jsonify({'result': 'success'})
-
-
-@app.route('/memo', methods=['GET'])
-def read_articles():
-    # 1. mongoDB에서 _id 값을 제외한 모든 데이터 조회해오기 (Read)
-    result = list(db.articles.find({}, {'_id': 0}))
-    # 2. articles라는 키 값으로 article 정보 보내주기
-    return jsonify({'result': 'success', 'articles': result})
-
+@app.route('/forward')
+def show_forward():
+    return render_template('player_forward.html')
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)
