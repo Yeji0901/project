@@ -7,10 +7,45 @@ app = Flask(__name__)
 
 # client = MongoClient('mongodb://test:test@localhost', 27017)  # mongoDB는 27017 포트로 돌아갑니다.
 # db = client.dbsparta  # 'dbsparta'라는 이름의 db를 만들거나 사용합니다.
+# Goalkeeper
+# Defender
+# Midfielder
+# Forward
 
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/search_goalkeepers', methods=['GET'])
+def show_goalkeepers():
+    result = []
+
+    url = "https://en.psg.fr/teams/first-team/squad"
+    response_data = requests.get(url)
+    soup = BeautifulSoup(response_data.text, 'html.parser')
+
+    # PARSER FOR ALL PLAYERS
+    a_tags = soup.select("#toggleTab0-tab-target > div.container.player-list > section")
+
+    for a_tag in a_tags:
+        players = a_tag.select('a')
+        for player in players:
+            position = player.select_one(
+                "div.player-card__main > div.player-card__body > div.player-card__details > p.player-card__position")
+            img = player.select_one(
+                "div.player-card__main > div.player-card__body > div.player-card__mobile-avatar.u-visible-mobile > figure > img")[
+                "data-src"]
+            if position.text == "Goalkeeper":
+                link = player['href']
+                player_name = link.split('/')[-1]
+                # print(position.text, player_name, img)
+                result.append([position.text, player_name, img])
+
+    return jsonify({'result': 'success', 'goalkeepers': result})
+
+@app.route('/goalkeepers')
+def show_goalkeepers():
+    return render_template('player_goalkeepers.html')
 
 
 @app.route('/memo', methods=['POST'])
